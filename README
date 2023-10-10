@@ -1,0 +1,261 @@
+---------------------------------------------------------------------------
+                           OOLSR + NOA-OLSR
+---------------------------------------------------------------------------
+                    NOA-OLSR: Autoconfiguration
+   Autoconfiguration from OLSR, developed in the laboratory of Pr. Mase.
+
+   Information and Communication Network Lab.,
+   Information Network Research Group, Department of Information Engineering
+ Copyright 2004-2005 Graduate School of Science and Technology, 
+ Niigata University.  All rights reserved.  Distributed only with permission.
+---------------------------------------------------------------------------
+                                OOLSR                           
+                 Projet Hipercom, INRIA Rocquencourt
+  Copyright 2004-2005 Institut National de Recherche en Informatique et
+  en Automatique.  All rights reserved.  Distributed only with permission.
+---------------------------------------------------------------------------
+
+         --------------------------------------------------
+                   This software is available at
+                   http://hipercom.inria.fr/noa-olsr/
+         --------------------------------------------------
+
+
+I - Introduction
+----------------
+
+This is the implementation of NOA-OLSR, an extension of OLSR which
+has an autoconfiguration algorithm that was developped at Niigata
+University. It is based on OOLSR.
+OOLSR is the INRIA re-implementation of the OLSR protocol in C++
+(hence 'OO'LSR as in 'Object Oriented')
+
+II - License
+------------
+
+This code and files in this package are property of Niigata University
+and of project Hipercom.
+It is distributed under the GPL license, version 2 or later:
+see the file GPL-2.
+SPECIAL EXCEPTION: as a special exception, permission is granted to use
+the plugin (oolsr-plugin.so) with the NS-2 simulator: in that case
+the OOLSR files are still distributed under the GPL-2, but distributing
+the ns-2 simulator (w/ patches) along with OOLSR doesn't require you
+do distribute NS-2 under GPL.
+
+III - Compilation
+-----------------
+
+In short:
+  cd src && make
+
+Or better you may want to copy 'Makefile.private.template' to 
+'Makefile.private' and edit it a little first:
+  cd src && cp Makefile.private.template Makefile.private \
+   && emacs Makefile.private && make
+
+ By default the daemon is IPv4 only. Also IPv6 is supported only on Linux.
+
+The normal result of the compilation is:
+  oolsrd (stripped version of daemon_core): the daemon itself
+  oolsr_simul: a 'simulation' based on a topology
+plus intermediary libraries and plugins not used here.
+
+  III.1 - Troubleshooting
+  .......................
+
+This was successfully compiled on Debian unstable (i.e. Debian Sid),
+with a compiler g++ 3.3 and g++ 2.95.
+Most problems come from not having <linux/netlink.h> installed
+(it is in 'linux-kernel-headers' package on Debian Sid), from not having
+a <linux/wireless.h> (same package), or from having a older glibc with missing
+network functions (it is glibc 2.3.2 on Debian Sid).
+
+IV - Running
+------------
+
+  IV.1 - Running the daemon
+  .........................
+
+  Then just run:
+    ./oolsrd -i <first iface> -i <second iface> ... <options>
+
+  (with the cygwin version, you should probably first look at all the 
+   interfaces:
+   ./oolsrd -i show
+   and then use the indicated interface number to run OOLSR:
+   ./oolsrd -i )
+
+
+  IV.1.1 - Setting address selection and address mask
+  ...................................................
+
+  This part is new in NOA-OLSR:
+First you can specify the address selection algorithm:
+  --auto-conf-algorithm <algorithm identifier>
+    with:
+    . <algorithm identifier> = 0 :
+      increment the address once, until it is not conflicting according
+      to the busy list ; then increment it once again with a probability 
+      of 0.5 per default (set with --auto-conf-increment-probability <p>)
+    . <algorithm identifier> = 2 :
+      choose random bits in the address
+
+Then you can either set the prefix:
+  --auto-conf-ipv4-prefix <ipv4 network>/<prefix length>
+  (example: --auto-conf-ipv4-prefix 172.25.202.0/24)
+  --auto-conf-ipv6-prefix <ipv6 network>/<prefix length>
+  (example: --auto-conf-ipv4-prefix fd51:f2d1:91ad::0/112)
+Or you can set the initial address:
+  --auto-conf-ipv4-initial-address <ipv4 address>/<prefix length>
+  (example: --auto-conf-ipv4-initial-address 172.25.202.202/24)
+  --auto-conf-ipv6-initial-address <ipv6 address>/<prefix length>  
+  (example: --auto-conf-ipv6-initial-address fd51:f2d1:91ad::1234/112)
+
+In IPv4 you should use
+  --auto-conf-hash-hello 1
+  to use a OLSR broadcast address which is not a multicast address
+
+You can set some parameters
+  --kept-address <address>/<prefix length>
+    by default NOA-OLSR removes all the addresses of the interface it
+    is running on. This indicates that the given address should not
+    removed (if it is found assigned to the interface)
+  --auto-conf-no-state <boolean>
+    if true, the protocol uses no states. Otherwise the state durations
+    can by set by:
+    --auto-conf-hello-state-duration <duration>
+    and
+    --auto-conf-topology-state-duration <duration>
+
+Because NOA-OLSR is using iproute and iptables internally,
+the path of these tools should be set if it is used:
+  --ip-route-path <path>
+     (default: /sbin/ip)
+  --iptables-path <path>
+     (default: /sbin/iptables)
+
+  Other various protocol parameters can be set:
+  max-tc-diff-seq-num (MAX_TC_DIFF_SEQ_NUM in draft),
+  max-message-rate (MAX_MESSAGE_RATE in draft),
+  etc... (NODE_STATE_HOLD_TIME, CONFLICT_HOLD_TIME, NODE_FAMILIAR_TIME,
+  MAX_MPR_REMEMBER_TIME, MIN_TC_FAMILIARITY_RATE)
+
+see documentation in src/parameters.def and the draft in draft/Draft/
+  
+
+
+  IV.2 - Running the daemon (IPv4)
+  ................................
+
+  As <options> you would pass:
+     --use-ipv4
+By default OLSR messages are sent on multicast address 224.0.0.1,
+(for consistency with IPv6, which uses multicast as well),
+you can change this with:
+   --ipv4-multicast-address 255.255.255.255
+for instance.
+  
+
+  IV.3 - Running the daemon (IPv6)
+  ................................
+
+  As <options> you would pass:
+     --use-ipv6 1
+(note: this will be changed to --use-ipv6 alone in further versions)
+By default OLSR messages are sent on multicast address ff02::1,
+you can change this with:
+   --ipv6-multicast-address ff0e::1
+for instance.
+
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+  The documentation that follows was for the original OOLSR - it is no
+  longer valid for NOA-OLSR
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+
+    IV.3.1 - IPv6, site-local addresses (or unique local addresses)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can configure IPv6 site-local addresses first on OLSR interfaces,
+since OOLSR uses them - the idea being to take the link-local address
+and replace the link-local prefix by a site-local prefix (i.e. fec0:...)
+
+(note: you can also use unique local IPv6 addresses, locally assigned,
+<http://www.ietf.org/internet-drafts/draft-ietf-ipv6-unique-local-addr-04.txt>,
+i.e. fd00::/8 )
+  
+(Unix hint for setting site-local addresses:
+  IFACE=eth0
+  ADDR=$(ip addr show ${IFACE} | grep inet6 | cut -d/ -f1 | cut '-d6' -f 2)
+  ip addr add $(echo ${ADDR} | sed s/fe80:/fec0:/)/64 dev ${IFACE}
+)
+
+    IV.3.2 - IPv6, any address
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    You can use the option --ipv6-address-filter <address or network>
+to specify the address that should be used on an interface, for instance:
+  --ipv6-address-filter fe80::0/64 
+for link local addresses (which is a BAD idea for many reasons, including
+the fact that they should not be routed).
+
+
+  IV.4 - Running the 'simulation'
+  ...............................
+
+  You can run a 'simulation' (no physical/MAC layer simulated, no data
+packets) with simul_static_plugee as:
+    ./oolsr_simul --topology sample.topology
+  or with something like:
+    ./oolsr_simul 100 1 0.3 0.3 0.0
+  This feature is not yet documented.
+
+  Another way to use this feature is to go in the tools/ subdirectory
+and look the Makefile, and read the tools/scenario/README file.
+
+  IV.5 - Running the 'checks'
+  ...........................
+
+  You can run a simulations with a manually defined topologies. The format
+is described in tools/scenario/README, some examples are in tools/scenario.
+A way to run them is to go into directory tools/ and type "make".
+
+V - Plugin
+----------
+  
+  OOLSR can compile to a plugin (.so), used by the API presented in 
+include/protocol-plugin-api.h . This plugin has been used in NS2.
+More on this in some future version. See also VII NS2.
+
+
+VI - Installation
+-----------------
+
+The installation is manual, since it is sufficient to copy oolsrd
+in the proper place and add it to the start/stop scripts.
+
+VII - NS 2
+----------
+
+You can use OOLSR as a plugin for NS-2.
+In that case, it is easier to take the ns-allinone distribution with
+integrated OOLSR.
+  In that case, compilation is achieved, after extracting the .tar.gz
+with the command: ./install in ns-allinone-2.27-oolsr-<version> directory.
+You can then run the OOLSR as an agent, using the test such as:
+  cd ns-allinone-2.27-oolsr-<version>
+  cd ns-2.27/oolsr
+  ../ns test-unicast.tcl
+You can then examine logs in directory test-unicast-result, and for
+information about using OOLSR in NS-2, just read the source
+'test-unicast.tcl'. OOLSR is just a standard agent such as those used
+in wireless ad hoc networks (see NS-2 documentation).
+
+---------------------------------------------------------------------------
+
+Misc about VC++ .cc setup:
+http://nebuladevice.sourceforge.net/doc2/doxydoc/nebula2/html/Nebula2Compiling.html
+
+---------------------------------------------------------------------------

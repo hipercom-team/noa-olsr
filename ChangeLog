@@ -1,0 +1,28 @@
+2005-04-28  Cedric Adjih  <cedric@net.ie.niigata-u.ac.jp>
+
+	* First release with NOA-OLSR algorithm implemented.
+	(no longer compiled or tried on cygwin, Windows, ...)
+
+2004-11-12  Cedric Adjih  <cedric.adjih@inria.fr>
+
+	* Added NS-2 code support for the OOLSR plugin, and distribution of 
+	ns-allinone including it.
+
+2004-08-31  Cedric Adjih  <cedric.adjih@inria.fr>
+
+	* Ported to VC++ 6.0 and Windows CE (Pocket PC 2004).
+
+	* Updated port to cygwin. Now it really works. Also supports HTTP
+	server.
+
+	* Now HTTP server works and display useful information (advanced HTTP 
+	authentication implemented but not used)
+
+2004-08-13  Cedric Adjih  <cedric.adjih@inria.fr>
+
+	* Released 0.99.11
+
+	* Now works in IPv4 (multicast or 255.255.255.255) and IPv6 both, need
+	still to refine the "bind" calls.
+
+	* Added support --ipv6-address-filter <address>[/prefix]
